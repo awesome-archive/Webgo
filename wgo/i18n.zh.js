@@ -3,11 +3,11 @@
 WGo.lang = "zh";
 
 WGo.i18n[WGo.lang] = {
-	"about-text": "<h1>WGo.js Player 2.0</h1>"
-				+ "<p>WGo.js Player 扩展自 WGo.js, 是为围棋编写的 HTML5 库。 它可以让你浏览棋谱，以及包含很多其他功能，例如点目。并且你可以很容易地扩展它。</p>"
-				+ "<p>WGo.js 的开源许可 <a href='http://en.wikipedia.org/wiki/MIT_License' target='_blank'>MIT license</a>。你可以使用和修改该项目。</p>"
-				+ "<p>你可以从以下网站获得更多信息 <a href='http://wgo.waltheri.net/player' target='_blank'>wgo.waltheri.net/player</a></p>"
-				+ "<p>版权 &copy; 2013 Jan Prokop</p>",
+	"about-text": "<h3>Webgo 0.1</h3>"
+				+ "<p>Webgo扩展自WGo.js，手机浏览器就能访问电脑或云主机上的围棋AI。使用Webgo可以和围棋AI对弈，也可用来打谱时的AI分析，Webgo服务器端的围棋AI采用了leelazero，你可以扩展它。</p>"
+				+ "<p>Webgo的开源许可<a href='https://en.wikipedia.org/wiki/GNU_Affero_General_Public_License' target='_blank'>AGPL-3.0 license</a>。</p>"
+				+ "<p>你可以从以下网站获得更多信息 <a href='https://github.com/zliu1022/webgo' target='_blank'>Webgo repository</a></p>"
+				+ "<p>版权 &copy; 2019 Zheng LIU</p>",
 	"black": "黑方",
 	"white": "白方",
 	"DT": "日期",
@@ -51,10 +51,11 @@ WGo.i18n[WGo.lang] = {
 	"menu": "菜单",
 	"comments": "注解",
 	"gameinfo": "棋局",
-	"editmode": "编辑模式",
+	"editmode": "试下模式",
 	"playmode": "对弈模式",
 	"analyze": "分析",
 	"permalink": "链接",
+	"sgflib": "棋谱",
 	"scoremode": "点目",
 	"score": "目数",
 	"bwin": "黑胜 $ 目",
@@ -62,4 +63,5 @@ WGo.i18n[WGo.lang] = {
 	"b-area-win": "黑胜 $ 点",
 	"w-area-win": "白胜 $ 点",
 	"help_score": "点击棋子或交叉点增减：空+对方死子，活子+空",
+	"MoveNum": "显示手数",
 }

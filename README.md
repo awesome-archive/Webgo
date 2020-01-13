@@ -1,94 +1,38 @@
 # Webgo
 
 # Introduction
-Using web browser to visit your computer which is running leela zero to analyse sgf.
-So you can analyse all kifu anywhere.
+Using web browser to visit game go AI program in remote computer.
+Remote computer can be personal computer or cloud compute service, now Webgo server part can support leela zero in windows, mac or linux and support Zen6,Zen7 in windows.
+Then you can play game or analyze kifu with AI.
 
 ![screenshot](screenshot/chinese.PNG)
 
-# Dependency and acknowledge
-1. Web page based on WGo.js.
-2. Server side based on Leela Analysis Scripts and using python2.7
-3. Server side also need Python module: bottle, gevent, gevent-websocket
-4. Using some sabaki theme
+# Acknowledge and Dependency
+1. Web page based on [WGo.js](https://github.com/waltheri/wgo.js).
+2. Server side based on [Leela Analysis Scripts](https://github.com/lightvector/leela-analysis)
+3. Server side depends on Python module: bottle, gevent and gevent-websocket
+4. Also use some [Sabaki](https://github.com/SabakiHQ/Sabaki) theme, which is my favorite go UI
+5. Thanks hzy's strongest 4b32f leela-zero weights, I put it together with windows release package
 
-# Server Installation
-1. Install python 2.7
-2. Install bottle, gevent, gevent-websocket
+# Using Webgo in Windows
+1. Download [release](https://github.com/zliu1022/Webgo/releases/download/v0.3/Webgo-20190319.7z) package and Unzip
+2. Click start.bat
+3. Visit page according to console message
+Here is an example:
 ```
-pip bottle
-pip gevent
-pip gevent-websocket
-```
-3. If you already have your web server, please skip this step
-
-As an alternate web server solution, you can do several step:
-```
-cd webgo
-python -m SimpleHTTPServer
+please enter URL: http://192.168.1.66:8000/webgo.html
 ```
 
-3.1 download nginx/1.2.8
-
-3.2 modify nginx.conf and set the port and root path
-```
-server {
-        listen       80;
-        server_name  localhost;
-        charset utf-8;
-        location = / {
-            root   C:\web;
-            index  index.html index.php;
-}
-```
-3.3 add sgf as one filetype permitted by server
-```
-location ~* \.(htm|html|gif|jpg|jpeg|png|css|js|ico|json|net|sgf)$ {
-    root C:\web;
-}
-```
-4. put all zip content to your web site root
-
-In the example , it's ```c:\web```
-
-# Server Configuration
-In ```svr\webgo.py```, change to your own leelazero executable path and set the weight name correctly and make sure the leelaz.exe support lz-analyze gtp command
-```
-executable = "c:/go/leela-zero/leelaz.exe"
-weight = '-wc:/go/weight/62b5417b64c46976795d10a6741801f15f857e5029681a42d02c9852097df4b9.gz'
-```
-
-# Sgf library
-You can put sgf file under sgf directory
-
-# How to run
-server side, under cmd.exe run:
-```
-c:\python2.7\python webgo.py
-```
-
-browser side, can use pad/phone with any web browser
-```
-http://your_ip/webgo.html?sgf=1.sgf&move=50
-```
-
-# Using Webgo server in mac
-1. Install brew using ruby
+# Using Webgo in mac
+1. Compile and run leelazero, please refer to readme of [leela-zero](https://github.com/leela-zero/leela-zero/blob/master/README.md)
 ```
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-2. git clone branch
-```
-git clone -b next https://github.com/gcp/leela-zero.git
-```
-3. install boost
-```
 brew install boost
+git clone -b next https://github.com/gcp/leela-zero.git
+Compile leelaz
+get weight
 ```
-4. Compile leelaz with boardsize 9 or 19
-5. using curl -O or ftp to get weight
-6. full-tuner
-7. install pip， bottle, gevent, gevent-websocket
+2. install Webgo
 ```
 sudo easy_install pip
 sudo pip install bottle
@@ -98,8 +42,51 @@ pip install --user gevent-websocket
 ```
 If failed, maybe need to install pyenv, then using pyenv to install another version python
 pyenv global 2.7.11 to switch version, but wish you lucky
+```
+mkdir github
+cd github
+git clone https://github.com/zliu1022/Webgo.git -b next Webgo-next
+cd Wegbo-next
+mkdir dist
+```
+3. Config engine and weights
+```
+cp leelaz ~/github/Webgo/dist/leelaz
+cp network.gz ~/github/Webgo/dist/network.gz
+```
+4. run server and open firewall's corresponding port
+```
+python svr/webgo.py
+```
 
+# Using Webgo in google cloud
+1. Compile and run leelazero, please refer to readme of [leela-zero](https://github.com/leela-zero/leela-zero/blob/master/README.md)
+2. Install Webgo
+```
+sudo apt install python-minimal
+sudo apt install python-pip
+pip install bottle gevent gevent-websocket
+mkdir github
+cd github
+git clone https://github.com/zliu1022/Webgo.git -b next Webgo-next
+cd Wegbo-next
+mkdir dist
+```
+3. Config engine and weights
+```
+cp leelaz ~/github/Webgo/dist/leelaz
+cp network.gz ~/github/Webgo/dist/network.gz
+```
+4. run server and open firewall's corresponding port
+```
+python svr/webgo.py
+```
+
+# Server Configuration
+Change the command line option in leelaz.py
+```
+xargs = ['-t8', '--gpu', '0', '--gpu', '1']
+```
 
 # License
-
 The code is released under the AGPLv3 or later.

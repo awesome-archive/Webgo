@@ -14,11 +14,12 @@
 		<script type="text/javascript" src="wgo/basicplayer.js"></script>
 		<script type="text/javascript" src="wgo/basicplayer.component.js"></script>
 		<script type="text/javascript" src="wgo/basicplayer.infobox.js"></script>
-		<script type="text/javascript" src="wgo/basicplayer.commentbox.js"></script>
 		<script type="text/javascript" src="wgo/basicplayer.control.js"></script>
+		<script type="text/javascript" src="wgo/basicplayer.commentbox.js"></script>
 		<script type="text/javascript" src="wgo/player.editable.js"></script>
 		<script type="text/javascript" src="wgo/scoremode.js"></script>
-		<script type="text/javascript" src="wgo/player.permalink.js"></script>
+		<script type="text/javascript" src="wgo/movenum.js"></script>
+		<script type="text/javascript" src="wgo/player.sgflib.js"></script>
         
         <!-- customize your own menu -->
         <!-- play mode in the future -->
@@ -26,7 +27,7 @@
         <script type="text/javascript" src="wgo/player.analyze.js"></script>
 
         <!-- open this for chinese language -->
-		<!--script type="text/javascript" src="wgo/i18n.zh.js"></script-->
+		<script type="text/javascript" src="wgo/i18n.zh.js"></script>
 		<!--script src="wgo/jquery-1.8.3.min.js" type="text/javascript"></script-->
 		<link type="text/css" href="wgo/wgo.player.css" rel="stylesheet" />
 	</head>
@@ -63,12 +64,12 @@
 	        transition: opacity .5s;
 	        pointer-events: none;
 	        z-index: 999;
-	    }
+	    	}
 		#info-overlay.show {
 		    opacity: 1;
 		    transition: opacity .1s;
 		}
-	    </style>
+	    	</style>
 		<script type="text/javascript">
             var showvar="";
             show_var = function (obj) {
@@ -101,14 +102,23 @@
             var qs = getQueryString(); 
             var q1 = qs["sgf"];
             var q2 = qs["move"];
-            if (q1 === undefined) { q1="1.sgf"}
+            if (q1 === undefined) { q1="latest.sgf"}
+            var q1_begin = q1.indexOf('/');
+            var q1_end = q1.indexOf(".sgf");
+            var tmpstr = q1;
+            while (tmpstr.indexOf('-')!=-1) {
+                var f = tmpstr.indexOf('-');
+                tmpstr = tmpstr.substr(f+1, tmpstr.length-f-1)
+            }
+            var f_end = tmpstr.indexOf(".sgf");
+            document.title = tmpstr.substring(0,f_end);
             if (q2 === undefined) { q2="999"}
             q1="sgf/"+q1;
-            console.log("URL-sgf: ",q1)
-            console.log("URL-move: ",q2)
+            //console.log("URL-sgf: ",q1)
+            //console.log("URL-move: ",q2)
 
 			var elem = document.getElementById("player");
-            console.log("create player");
+            //console.log("create player");
 			var player = new WGo.BasicPlayer(elem, {
                 // can also input sgf content here
                 //sgf: "(;CA[utf-8]FF[4]SZ[19]GM[1]DT[2017-10-22]PB[Human]BR[10]PW[Zen7]WR[9]KM[7.5]",
@@ -122,8 +132,8 @@
 					//stoneHandler: WGo.Board.drawHandlers.NORMAL,
                     //stoneHandler: WGo.Board.drawHandlers.PAINTED,
                     //stoneHandler: WGo.Board.drawHandlers.GLOW,
-                    //stoneHandler: WGo.Board.drawHandlers.SHELL,
-                    stoneHandler: WGo.Board.drawHandlers.MONO,
+                    stoneHandler: WGo.Board.drawHandlers.SHELL,
+                    //stoneHandler: WGo.Board.drawHandlers.MONO,
                     //stoneHandler: WGo.Board.drawHandlers.CR, // circle
                     //stoneHandler: WGo.Board.drawHandlers.LB, // need to add text at the same time
                     //stoneHandler: WGo.Board.drawHandlers.SQ, // square
@@ -144,39 +154,42 @@
                         //WGo.DIR + "stones/white08_128.png",
                         //WGo.DIR + "stones/white09_128.png",
                         //WGo.DIR + "stones/white10_128.png",
-                        WGo.DIR + "stones/stone_-1.png"             //sabaki-default
-                        //"board/themes/walnut-theme/white.png"     //walnut
-                        //"board/themes/Cartoon/white1.png"         //cartoon
+                        //"theme/sabaki/stone_-1.png"             //sabaki-default
+                        //"theme/walnut-theme/white.png"     	//walnut
+                        //"theme/Cartoon/white1.png"         	//cartoon
+                        //"theme/yunnan/w.png"         		//yunzi
 					],
                     blackStoneGraphic: [ 	
                         //WGo.DIR + "stones/black00_128.png",
                         //WGo.DIR + "stones/black01_128.png",
                         //WGo.DIR + "stones/black02_128.png",
                         //WGo.DIR + "stones/black03_128.png",
-                        WGo.DIR + "stones/stone_1.png"              //sabaki-default
-                        //"board/themes/walnut-theme/black.png"     //walnut
-                        //"board/themes/Cartoon/black1.png"         //cartoon
+                        //"theme/sabaki/stone_1.png"              //sabaki-default
+                        //"theme/walnut-theme/black.png"     	//walnut
+                        //"theme/Cartoon/black1.png"         	//cartoon
+                        //"theme/yunnan/b.png"         		//yunzi
                     ],
 					starSize: 10,
 					stoneSize: 1,
 					shadowSize: 1,
-					background: "board/02.png",//my board
-                    background: WGo.DIR + "stones/board.png",             //sabaki-default
-                    //background: "board/themes/walnut-theme/walnut.jpg",   //walnut
-                    //background: "board/themes/Cartoon/board.png",         //cartoon
-					//background: "#000000"
-					background: "#FFFFFF" // white board
+					background: "theme/board/board2.png",		//my favorite board
+					//background: "theme/sabaki/board.png",		//sabaki-default
+					//background: "theme/walnut-theme/walnut.jpg",	//walnut
+					//background: "theme/Cartoon/board.png",	//cartoon
+					//background: "theme/yunnan/bd4.jpg",		//yunzi
+					//background: "#000000" // black board
+					//background: "#FFFFFF" // white board
 				},
-				layout: {
+				/*layout: {
 					top: ['InfoBox'],
 					bottom: ['Control', 'CommentBox']
-				},
+				},*/
 			});
 
             // code for playmode - begin
 			var svr_status=0;//0: idle 1:busy
 			player.board.addEventListener("click", function(x, y) {
-				console.log("click",x,y,player.kifuReader.game.turn)
+				//console.log("click",x,y,player.kifuReader.game.turn)
 				if (x<0 || y<0 || x>18 || y>18 || !player.kifuReader.game.isValid(x,y)) {
 					//document.getElementsByClassName("wgo-comments-content")[0].innerText="invalid click: "+x+","+y+"("+player.kifuReader.game.turn+")"
 					return;
@@ -185,7 +198,7 @@
                 
                 playmode = document.getElementsByClassName("wgo-menu-item wgo-menu-item-playmode")
                 if ( (playmode.length == 0) || (playmode[0].classList.length!=3) ){ // no wgo-selected
-                    console.log("normal mode")
+                    //console.log("normal mode")
                     //document.getElementsByClassName("wgo-comments-content")[0].innerText="nomal mode, can't play"
                     return;
                 }
@@ -193,7 +206,7 @@
 				if (svr_status==1) {
 					//document.getElementsByClassName("wgo-comments-content")[0].innerText+="\nsvr is busy"
 				} else {
-					document.getElementById("busy").style.diaplay="block"
+					document.getElementById("busy").style.display="block"
 					document.getElementById("info-overlay").style.opacity=1
 					//document.getElementsByClassName("wgo-comments-content")[0].innerText+="\nsvr is thinking..."
 					//player.board.addObject({x: x, y: y, c: WGo.B})
@@ -214,7 +227,7 @@
                             for(i = 0; i < d.length; i++) {
                                 document.getElementsByClassName("wgo-comments-content")[0].innerText+="\n"+"ABCDEFGHJKLMNOPQRST"[d[i].x] + (19-d[i].y) + " " + d[i].count + " " + d[i].winrate + "% " + d[i].seq
                             }
-							document.getElementById("busy").style.diaplay="none"
+							document.getElementById("busy").style.display="none"
 							document.getElementById("info-overlay").style.opacity=0
                             player.kifuReader.node.appendChild(new WGo.KNode({
                                 move: {	x: d[0].x, 	y: d[0].y, c: d[0].color},
@@ -227,7 +240,7 @@
 							//超时，statusText==timeout
 							console.log("error: " + JSON.stringify(er));
 							document.getElementsByClassName("wgo-comments-content")[0].innerText=JSON.stringify(er);
-							document.getElementById("busy").style.diaplay="none"
+							document.getElementById("busy").style.display="none"
 							document.getElementById("info-overlay").style.opacity=0
 							svr_status=0;
 						},
@@ -261,7 +274,7 @@
             document.addEventListener('DOMContentLoaded', function () {
                 var el1=document.getElementsByClassName("wgo-comments-wrapper")[0];
                 var el2=document.getElementsByClassName("wgo-player-info-title")[0];
-                console.log('DOMContentLoaded', el1, el2);
+                //console.log('DOMContentLoaded', el1, el2);
                 //开始调用load事件
             });
             document.onreadystatechange = function () {
@@ -269,21 +282,43 @@
                     //开始调用load事件
                     var el1=document.getElementsByClassName("wgo-comments-wrapper")[0];
                     var el2=document.getElementsByClassName("wgo-player-info-title")[0];
-                    console.log("onreadystatechange, interactive",el1,el2);
+                    //console.log("onreadystatechange, interactive",el1,el2);
                 } else if(document.readyState == "complete") {
                     //开始调用onload事件
                     var el1=document.getElementsByClassName("wgo-comments-wrapper")[0];
                     var el2=document.getElementsByClassName("wgo-player-info-title")[0];
-                    console.log("onreadystatechange, complete",el1,el2);
+                    //console.log("onreadystatechange, complete",el1,el2);
                 }
             }
             window.onload = function () {
                 var el1=document.getElementsByClassName("wgo-comments-wrapper")[0];
                 var el2=document.getElementsByClassName("wgo-player-info-title")[0];
-                console.log('window.onload',el1,el2);
+                var el3=document.getElementsByClassName("wgo-comments-content")[0];
+                //el3.innerHTML = "<iframe id=\"chart_winrate\" src=\"chart/index.html\" style=\"display: none;\"></iframe>" + el3.innerHTML;
+                /*
+                el3.innerHTML = "<canvas id=\"chart_winrate\" style=\"display: none;\"></canvas>" + el3.innerHTML;
+                var el4=document.getElementsByClassName("wgo-box-title")[2];
+                console.log(el4);
+                var show_chart = function() {
+                    var el_chart=document.getElementById("chart_winrate");
+                    var el_comment_text=document.getElementsByClassName("wgo-comment-text")[0];
+                    el_chart.width=el_comment_text.offsetWidth;
+                    console.log(el_chart.style.display);
+                    if(el_chart.style.display=="none"){
+                        el_chart.style.display="block";
+                    } else {
+                        el_chart.style.display="none";
+                    }
+                };
+                el4.addEventListener("click", show_chart);
+                */
+                //el4.addEventListener("touchstart", show_chart);
+                
+                //console.log('window.onload',el1,el2);
                 
                 //document.getElementsByClassName("wgo-box-title")[2].style.left="-50px"
 
+		/*
                 document.getElementsByClassName("wgo-comments-wrapper")[0].style.height="150px"
                 
                 document.getElementsByClassName("wgo-player-info-title")[0].style.fontSize="10px"
@@ -292,6 +327,14 @@
                 document.getElementsByClassName("wgo-player-info-title")[3].style.fontSize="10px"
                 document.getElementsByClassName("wgo-player-info-title")[4].style.fontSize="10px"
                 document.getElementsByClassName("wgo-player-info-title")[5].style.fontSize="10px"
+		*/
+
+		// get device pt
+		/*
+		document.getElementsByClassName("wgo-comments-content")[0].innerText="w x h: " + 
+			window.screen.width + " x " + window.screen.height + 
+			" ("+window.devicePixelRatio+")";
+		*/
             }
 
             /*

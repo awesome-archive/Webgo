@@ -8,6 +8,7 @@ from Queue import Queue, Empty
 import threading
 from subprocess import Popen, PIPE, STDOUT
 import json
+from geventwebsocket import WebSocketError
 
 update_regex = r'Nodes: ([0-9]+), Win: ([0-9]+\.[0-9]+)\% \(MC:[0-9]+\.[0-9]+\%\/VN:[0-9]+\.[0-9]+\%\), PV:(( [A-Z][0-9]+)+)'
 update_regex_no_vn = r'Nodes: ([0-9]+), Win: ([0-9]+\.[0-9]+)\%, PV:(( [A-Z][0-9]+)+)'
@@ -22,6 +23,14 @@ best_regex = r'([0-9]+) visits, score (\-? ?[0-9]+\.[0-9]+)\% \(from \-? ?[0-9]+
 stats_regex = r'([0-9]+) visits, ([0-9]+) nodes(?:, ([0-9]+) playouts)(?:, ([0-9]+) p/s)'
 bookmove_regex = r'([0-9]+) book moves, ([0-9]+) total positions'
 finished_regex = r'= ([A-Z][0-9]+|resign|pass)'
+
+def get_time_stamp():
+    ct = time.time()
+    local_time = time.localtime(ct)
+    data_head = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+    data_secs = (ct - long(ct)) * 1000
+    time_stamp = "%s.%03d" % (data_head, data_secs)
+    return time_stamp
 
 #Start a thread that perpetually reads from the given file descriptor
 #and pushes the result on to a queue, to simulate non-blocking io. We
@@ -86,20 +95,24 @@ class CLI(object):
         self.seconds_per_search = seconds_per_search + 1 #add one to account for lag time
         self.p = None
         self.analyzeStatus=False
+        self.analyzeSend=False
+        self.analyzeSess=""
+        self.analyzeInterval=100
 
     def gen_analyze(self,wsock):
+        infolen = 0
+        lastsess = ""
         print "leelaz thread %s is running" % threading.current_thread().name
-        print wsock
 
         #localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) 
-        interval = 100
         analyze_count = 2
-        cmd = "lz-analyze %d" % interval # send analyze per second 
+        cmd = "lz-analyze %d" % self.analyzeInterval # send analyze per second 
         self.p.stdin.write(cmd + "\n")
-        sleep_per_try = interval/1000
+        sleep_per_try = self.analyzeInterval/1000
         tries = 0
         success_count = 0
-        ret={"cmd":"", "para":"", "result":""}
+        ret={"cmd":"", "sess":"", "para":"", "result":""}
+        re = []
 
         #while self.analyzeStatus and tries <= analyze_count and lz.p is not None:
         while self.analyzeStatus and self.p is not None:
@@ -107,57 +120,77 @@ class CLI(object):
             tries += 1
             # Readline loop
             while True:
-                s = self.stdout_thread.readline()
-                #print s
+                s = None
+                try:
+                    s = self.stdout_thread.readline()
+                except IOError:
+                    print "IOError: self.stdout_thread.readline"
+                    pass
+
                 if (len(s) > 3): 
                     success_count += 1
 
-                    s_array = s.split("info move ")
-                    #print "s_array: %s " % s_array
+                    s=s.replace("\r\n", "")
+                    s_array = s.split("info ")
+                    if (len(s_array) <= 1): continue
+                    print "gen_analyze %s %d" % (get_time_stamp(), len(s_array))
+
+                    if (len(s_array) != infolen):
+                        #print "SEND & SESS: ", self.analyzeSend, self.analyzeSess
+                        infolen = len(s_array)
+                        #print "s_array len: %d " % len(s_array)
+                        if (len(s_array)>=1) : print "s_array[0]: %s " % s_array[0], 
+                        if (len(s_array)>=2) : print "s_array[1]: %s " % s_array[1][0:100]
+
                     re = []
                     for analyz_orig in s_array:
-                        #print "analyz_orig: %s " % analyz_orig
                         analyz_response={"x":-1, "y":-1, "move":"", "visits":1, "winrate":1, "order":1, "pv":""}
                         
                         analyz = analyz_orig.split(" ")
-                        #print "analyz: %s " % analyz
                         if (len(analyz)<10) :continue
-                        analyz_response["move"]=analyz[0]
-                        if(analyz[0]=="pass"):
+
+                        for i in range(0, len(analyz)):
+                            el = analyz[i]
+                            if el=='move': analyz_response["move"]=analyz[i+1]
+                            if el=='visits': analyz_response["visits"]=analyz[i+1]
+                            if el=='winrate': analyz_response["winrate"]=analyz[i+1]
+                            if el=='prior': analyz_response["prior"]=analyz[i+1]
+                            if el=='lcb': analyz_response["lcb"]=analyz[i+1]
+                            if el=='order': analyz_response["order"]=analyz[i+1]
+                            if el=='pv': analyz_response["pv"]=" ".join(analyz[i+1:])
+
+                        move = analyz_response["move"]
+                        if(move=="pass"):
                             analyz_response["x"] = self.board_size
                             analyz_response["y"] = self.board_size
                         else:
-                            analyz_response["x"] = 'ABCDEFGHJKLMNOPQRST'.find(analyz[0][0])
-                            analyz_response["y"] = self.board_size - int(analyz[0][1:])
-                        analyz_response["visits"]=analyz[2]
-                        analyz_response["winrate"]=analyz[4]
-                        analyz_response["prior"]=analyz[6]
-                        analyz_response["order"]=analyz[8]
-                        analyz_response["pv"]=" ".join(analyz[10:])
-                        
+                            analyz_response["x"] = 'ABCDEFGHJKLMNOPQRST'.find(move[0])
+                            analyz_response["y"] = self.board_size - int(move[1:])
+                       
                         re.append(analyz_response)
-                        if(len(re)>30) : break
+                        if(len(re)>=3) : break
 
-                    '''
-                    localtime = get_time_stamp();
-                    if (len(re)>0):
-                        print "time: %s success %d INFO: %s" % (localtime, success_count, re[0])
-                    else :
-                        print "time: %s success %d INFO: %s" % (localtime, success_count, "END")
-                    '''
-                    #print "success: %d" % success_count
-                    #print "INFO: %s (len:%d)" % (re[0], len(re))
-                    #print ""
                     try:
-                        #ret["cmd"]="time";
-                        #ret["result"]=localtime;
-                        #wsock.send(json.dumps(ret))
-
                         ret["cmd"]="lz-analyze";
                         ret["result"]=re;
-                        print ret
-                        print
-                        wsock.send(json.dumps(ret))
+                        if(len(re)==0) : 
+                            print
+                            print "WARNING result length is 0"
+                            print
+                            continue
+                        ret["sess"]=self.analyzeSess;
+
+                        if (lastsess!=self.analyzeSess):
+                            if (lastsess!="") :
+                                #print "SESS changed, throw away first analyze"
+                                print "first: ", ret["result"][0]
+                                lastsess = self.analyzeSess
+                                #continue
+                            else :
+                                lastsess = self.analyzeSess
+
+                        if self.analyzeSend == True:
+                            wsock.send(json.dumps(ret))
                     except WebSocketError:
                         cmd = ""
                         self.analyzeStatus = False
@@ -175,13 +208,13 @@ class CLI(object):
             cmd = ""
             if self.p is not None:
                 print "if lz.p is not None"
-                self.p.stdin.write(cmd + "\n")
+                print self.p
+                print self.p.stdin
+                #self.p.stdin.write(cmd + "\n")
                 time.sleep(sleep_per_try)
                 (so,se) = self.drain()
-                print "stdout"
-                print "".join(so)
-                print "stderr"
-                print "".join(se)
+                print "STDOUT: ", "".join(so)
+                print "STDERR: ", "".join(se)
             else:
                 print "if lz.p is None"
             return re
@@ -260,8 +293,13 @@ class CLI(object):
         return (so,se)
 
     # Send command and wait for ack
-    def send_command(self, cmd, expected_success_count=1, drain=True, timeout=20, sleep_per_try = 0.1):
-        self.p.stdin.write(cmd + "\n")
+    def send_command(self, cmd, expected_success_count=1, drain=True, timeout=20, sleep_per_try = 0.1, nowait=True):
+        try:
+            ret = self.p.stdin.write(cmd + "\n")
+        except IOError:
+            print "CATCH-IOERROR: "
+            return -1
+        #print "RET-WRITE: ", ret 
         tries = 0
         success_count = 0
         while tries * sleep_per_try <= timeout and self.p is not None:
@@ -270,19 +308,22 @@ class CLI(object):
             # Readline loop
             while True:
                 s = self.stdout_thread.readline()
+                #if (len(s)): print "SDCMD-STDOUT: ", s
+                if (nowait): s = '='
                 # Leela follows GTP and prints a line starting with "=" upon success.
                 if s.strip()[0:1] == '=':
                     success_count += 1
                     if success_count >= expected_success_count:
                         if drain:
                             so,se = self.drain()
-                            #print >>sys.stdout, so
-                            #print >>sys.stderr, se
-                        return
+                            #print "SDCMD-DRAIN-STDOUT: ", "".join(so)
+                            #print "SDCMD-DRAIN-STDERR: ", "".join(se)
+                        return 0
                 # No output, so break readline loop and sleep and wait for more
                 if s == "":
                     break
         raise Exception("Failed to send command '%s' to Leela" % (cmd))
+        return 0
 
     #cpu version
     #def wait_start(self, expected_string="BLAS Core: Haswell", drain=True, timeout=20):
@@ -297,9 +338,11 @@ class CLI(object):
             print " %d seconds" % tries
             # Readline loop
             while True:
-                #s = self.stdout_thread.readline()
+                s1 = self.stdout_thread.readline()
+                print "STDOUT: ", s1
                 #s = self.stderr_thread.read_all_lines()
                 s = self.stderr_thread.readline()
+                print "STDERR: ", s
                 if s.find(expected_string)!=-1:
                     print "leela zero started %d seconds" % tries
                     if drain:
@@ -347,7 +390,13 @@ class CLI(object):
         raise Exception("Failed to send command '%s' to Leela" % (cmd))
 
     def start(self, weight):
-        xargs = []
+        #xargs = ['--puct', '0.5', '--softmax_temp', '2.0', '--fpu_reduction', '0.25']
+        #xargs = ['-t8', '--gpu', '0', '--gpu', '1']
+        #xargs = ['-t8', '--batchsize',  '16',  '--precision', 'half', '--disable-frac-backup', '--gpu', '0', '--gpu', '1', '--gpu', '2', '--gpu', '3']
+        if self.board_size == 7:
+            xargs = ['--pacman']
+        else:
+            xargs = []
 
         if self.verbosity > 0:
             print >>sys.stderr, "Starting leela-zero..."

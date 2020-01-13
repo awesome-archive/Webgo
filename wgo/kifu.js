@@ -549,7 +549,7 @@ var exec_node = function(game, node, first) {
 		}
 		else {
 			var res = game.play(node.move.x, node.move.y, node.move.c);
-			if(typeof res == "number") throw new InvalidMoveError(res, node);
+			if(typeof res == "number") throw new InvalidMoveError(res, node, game.size);
 			// we must check whether to add move (it can be suicide)
 			for(var i in res) {
 				if(res[i].x == node.move.x && res[i].y == node.move.y) {
@@ -593,6 +593,32 @@ var exec_node = function(game, node, first) {
 	}
 }
 
+var set_color = function() {
+	//console.log("turn: ", player.kifuReader.game.turn);
+	var elem_white=document.getElementsByClassName("wgo-box-wrapper wgo-player-wrapper wgo-white")[0];
+	var elem_black=document.getElementsByClassName("wgo-box-wrapper wgo-player-wrapper wgo-black")[0];
+
+	//var turn_color = "0px 0px 15px 1.5px #95B8E7"; // light blue
+	var turn_color = "2px 2px 5px 5px #95B8E7"; // light blue
+
+	elem_black.style.borderLeftWidth="1px";
+	if (player.kifuReader.game.turn == WGo.B) {
+		elem_black.style.borderColor="gray"
+		elem_white.style.borderColor="rgba(200, 200, 200, 0.5)"
+
+		elem_black.style.outline = "none";
+		elem_black.style.boxShadow = turn_color;
+		elem_white.style.boxShadow = "none"
+	}else{
+		elem_white.style.borderColor="gray"
+		elem_black.style.borderColor="rgba(200, 200, 200, 0.5)"
+
+		elem_black.style.boxShadow = "none"
+		elem_white.style.outline = "none";
+		elem_white.style.boxShadow = turn_color;
+	}
+}
+
 var exec_next = function(i) {
 	if(i === undefined && this.rememberPath) i = this.node._last_selected;
 	i = i || 0;
@@ -601,6 +627,8 @@ var exec_next = function(i) {
 	if(!node) return false;
 	
 	var ch = exec_node(this.game, node);
+
+	set_color();
 	
 	this.path.m++;
 	if(this.node.children.length > 1) this.path[this.path.m] = i;
@@ -616,6 +644,8 @@ var exec_previous = function() {
 	
 	this.game.popPosition();
 	if(this.node.turn) this.game.turn = this.node.turn;
+
+	set_color();
 	
 	if(this.path[this.path.m] !== undefined) delete this.path[this.path.m];
 	this.path.m--;
@@ -633,6 +663,8 @@ var exec_first = function() {
 	
 	if(this.kifu.info["HA"] && this.kifu.info["HA"] > 1) this.game.turn = WGo.W;
 	this.change = exec_node(this.game, this.node, true);
+
+	set_color();
 }
 
 KifuReader.prototype = {
@@ -746,7 +778,7 @@ KifuReader.prototype = {
 WGo.KifuReader = KifuReader;
 
 // Class handling invalid moves in kifu
-var InvalidMoveError = function(code, node) {
+var InvalidMoveError = function(code, node, size) {
 	this.name = "InvalidMoveError";
     this.message = "Invalid move in kifu detected. ";
 	
@@ -754,7 +786,9 @@ var InvalidMoveError = function(code, node) {
 		var letter = node.move.x;
 		if(node.move.x > 7) letter++;
 		letter = String.fromCharCode(letter+65);
-		this.message += "Trying to play "+(node.move.c == WGo.WHITE ? "white" : "black")+" move on "+String.fromCharCode(node.move.x+65)+""+(19-node.move.y);
+		//this.message += "Trying to play "+(node.move.c == WGo.W ? "white" : "black")+" move on "+String.fromCharCode(node.move.x+65)+""+(13-node.move.y);
+        this.message += "Trying to play "+(node.move.c == WGo.W ? "white" : "black")+" move on "+letter+""+(size-node.move.y)+
+        	";"+(node.move.c == WGo.W ? "W" : "B")+"["+'abcdefghijklmnopqrs'[node.move.x]+'abcdefghijklmnopqrs'[node.move.y]+"]";
 	}
 	else this.message += "Move object doesn't contain arbitrary attributes.";
 	

@@ -85,11 +85,12 @@
 
 .wgo-board {
 	margin: 0 auto;
-    background-color: #CEB053;
-    border-top: #F0E7A7 solid 1px;
+    background-color: #CEB053; // default: dark yellow
+    /*background-color: #F9D65B; // light yellow*/
+    /*border-top: #F0E7A7 solid 1px;
     border-right: #D1A974 solid 1px;
     border-left: #CCB467 solid 1px;
-    border-bottom: #665926 solid 3px;
+    border-bottom: #665926 solid 3px;*/
     /*border-right: #665926 solid 3px;*/
     border-radius: 3px;
 }
@@ -154,6 +155,7 @@
 }
 
 .wgo-player-info-box-wrapper {
+	float: left;
 	width: 33.3%;
 	display: inline-block;
 }
@@ -185,7 +187,7 @@
 
 .wgo-player-right .wgo-player-wrapper, .wgo-player-left .wgo-player-wrapper {
 	height: 85px;
-	border-bottom: 0;
+	/*border-bottom: 0;*/
 }
 
 /* top and bottom modifications */
@@ -655,9 +657,9 @@ input[type="text"].wgo-player-mn-value  {
 .wgo-info-message {
 	margin: 15% auto;
 	min-height: 50%;
-	max-height: 70%;
+	max-height: 80%;
 	min-width: 50%;
-	max-width: 70%;
+	max-width: 90%;
 	background-color: rgba(0,0,0,0.95);
 	overflow: auto;
 	padding: 20px;
@@ -705,3 +707,29 @@ input[type="text"].wgo-permalink {
 }
 
 /*--- /Permalinks ---------------------------------------------------------------------------*/
+
+/*--- Sgflib ---------------------------------------------------------------------------*/
+
+input[type="text"].wgo-sgflib {
+	padding: 7px 10px !important;
+	border: 1px solid white !important;
+	color: white !important;
+	width: 100% !important;
+	background-color: rgba(0,0,0,0) !important;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+a.wgo-sgflib {
+	padding: 1px 3px !important;
+	//border: 1px solid white !important;
+	font-size: 14px;
+	color: white !important;
+	width: 100% !important;
+	background-color: rgba(0,0,0,0) !important;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+/*--- /Sgflib ---------------------------------------------------------------------------*/
